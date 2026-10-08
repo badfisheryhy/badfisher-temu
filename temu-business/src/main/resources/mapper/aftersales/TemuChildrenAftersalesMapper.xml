@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.aftersales.mapper.TemuChildrenAftersalesMapper">
+
+    <sql id="Base_Column_List">
+        id, parent_aftersales_sn, aftersales_sn, seller_id, channel_id, site, order_sn,
+        aftersales_status, aftersales_type, aftersales_reason_code, aftersales_reason_desc, buyer_comment,
+        goods_id, sku_id, product_sku_id, apply_goods_number,
+        del_flag, create_time, update_time
+    </sql>
+
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO tb_temu_children_aftersales
+        (id, parent_aftersales_sn, aftersales_sn, seller_id, channel_id, site,
+         order_sn, aftersales_status, aftersales_type,
+         aftersales_reason_code, aftersales_reason_desc, buyer_comment,
+         goods_id, sku_id, product_sku_id, apply_goods_number,
+         del_flag, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.parentAftersalesSn}, #{item.aftersalesSn}, #{item.sellerId},
+             #{item.channelId}, #{item.site}, #{item.orderSn},
+             #{item.aftersalesStatus}, #{item.aftersalesType}, #{item.aftersalesReasonCode},
+             #{item.aftersalesReasonDesc}, #{item.buyerComment},
+             #{item.goodsId}, #{item.skuId}, #{item.productSkuId}, #{item.applyGoodsNumber},
+             #{item.delFlag}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            parent_aftersales_sn = VALUES(parent_aftersales_sn),
+            order_sn = COALESCE(VALUES(order_sn), order_sn),
+            aftersales_status = VALUES(aftersales_status),
+            aftersales_type = VALUES(aftersales_type),
+            aftersales_reason_code = COALESCE(VALUES(aftersales_reason_code), aftersales_reason_code),
+            aftersales_reason_desc = COALESCE(VALUES(aftersales_reason_desc), aftersales_reason_desc),
+            buyer_comment = COALESCE(VALUES(buyer_comment), buyer_comment),
+            goods_id = COALESCE(VALUES(goods_id), goods_id),
+            sku_id = COALESCE(VALUES(sku_id), sku_id),
+            product_sku_id = COALESCE(VALUES(product_sku_id), product_sku_id),
+            apply_goods_number = COALESCE(VALUES(apply_goods_number), apply_goods_number),
+            update_time = VALUES(update_time)
+    </insert>
+
+</mapper>

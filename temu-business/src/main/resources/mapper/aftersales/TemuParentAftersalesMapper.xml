@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.aftersales.mapper.TemuParentAftersalesMapper">
+
+    <sql id="Base_Column_List">
+        id, parent_aftersales_sn, seller_id, channel_id, site, parent_order_sn, aftersales_status_group,
+        parent_aftersales_status, aftersales_type, return_delivery_type,
+        create_time_api, update_time_api,
+        del_flag, create_time, update_time
+    </sql>
+
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO tb_temu_parent_aftersales
+        (id, parent_aftersales_sn, seller_id, channel_id, site, parent_order_sn, aftersales_status_group,
+         parent_aftersales_status, aftersales_type, return_delivery_type,
+         create_time_api, update_time_api, del_flag, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.parentAftersalesSn}, #{item.sellerId}, #{item.channelId}, #{item.site},
+             #{item.parentOrderSn},
+             #{item.aftersalesStatusGroup}, #{item.parentAftersalesStatus}, #{item.aftersalesType},
+             #{item.returnDeliveryType}, #{item.createTimeApi}, #{item.updateTimeApi},
+             #{item.delFlag}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            parent_order_sn = VALUES(parent_order_sn),
+            aftersales_status_group = VALUES(aftersales_status_group),
+            parent_aftersales_status = VALUES(parent_aftersales_status),
+            aftersales_type = VALUES(aftersales_type),
+            return_delivery_type = VALUES(return_delivery_type),
+            create_time_api = VALUES(create_time_api),
+            update_time_api = VALUES(update_time_api),
+            update_time = VALUES(update_time)
+    </insert>
+
+</mapper>

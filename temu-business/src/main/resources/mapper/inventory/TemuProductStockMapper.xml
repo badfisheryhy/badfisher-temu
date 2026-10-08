@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.inventory.mapper.TemuProductStockMapper">
+
+    <insert id="insertBatch" parameterType="list">
+        INSERT INTO tb_temu_product_stock_snapshot
+        (app_id, seller_id, shop_name, product_skc_id, product_sku_id, warehouse_id, warehouse_name,
+         stock_quantity, temp_lock_quantity, enable_pre_sale, shipping_mode,
+         snapshot_version, snapshot_time, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.appId}, #{item.sellerId}, #{item.shopName}, #{item.productSkcId}, #{item.productSkuId},
+             #{item.warehouseId}, #{item.warehouseName}, #{item.stockQuantity},
+             #{item.tempLockQuantity}, #{item.enablePreSale}, #{item.shippingMode},
+             #{item.snapshotVersion}, #{item.snapshotTime}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+    </insert>
+
+    <insert id="insertHistoryBatch" parameterType="list">
+        INSERT INTO tb_temu_product_stock_snapshot_history
+        (app_id, seller_id, shop_name, product_skc_id, product_sku_id, warehouse_id, warehouse_name,
+         stock_quantity, temp_lock_quantity, enable_pre_sale, shipping_mode,
+         snapshot_version, snapshot_time, create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.appId}, #{item.sellerId}, #{item.shopName}, #{item.productSkcId}, #{item.productSkuId},
+             #{item.warehouseId}, #{item.warehouseName}, #{item.stockQuantity},
+             #{item.tempLockQuantity}, #{item.enablePreSale}, #{item.shippingMode},
+             #{item.snapshotVersion}, #{item.snapshotTime}, #{item.createTime})
+        </foreach>
+    </insert>
+
+    <delete id="deleteAccountSnapshot">
+        DELETE FROM tb_temu_product_stock_snapshot
+        WHERE app_id = #{appId}
+          AND seller_id = #{sellerId}
+    </delete>
+
+    <delete id="deleteExpiredHistory">
+        DELETE FROM tb_temu_product_stock_snapshot_history
+        WHERE snapshot_time &lt; #{cutoffTime}
+        LIMIT #{limit}
+    </delete>
+</mapper>

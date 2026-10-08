@@ -1,0 +1,34 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: badfisher_temu
+      MYSQL_USER: badfisher
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+    volumes:
+      - temu-mysql:/var/lib/mysql
+      - ../sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/badfisher_temu?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+      DB_USERNAME: badfisher
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      TEMU_API_KEY: ${TEMU_API_KEY:?Set a random API key of at least 32 characters}
+      TEMU_RATE_LIMIT_MODE: local
+      XXL_JOB_ENABLED: 'false'
+    ports:
+      - "127.0.0.1:8080:8080"
+volumes:
+  temu-mysql:

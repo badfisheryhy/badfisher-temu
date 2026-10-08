@@ -1,0 +1,9 @@
+.git
+.tools
+dist
+Typora_Hook_Log.txt
+**/target
+logs
+**/*.log
+.env
+**/application-local.yml

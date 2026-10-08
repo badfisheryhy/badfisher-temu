@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.product.mapper.TemuProductMapper">
+
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO tb_temu_product
+        (app_id, seller_id, shop_name, product_id, product_skc_id, product_name, ext_code, main_image_url,
+         leaf_cat_id, leaf_cat_name, skc_site_status, support_personalization, match_skc_jit_mode,
+         created_at_api, properties_json, extension_json, sync_task_id,
+         del_flag, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.appId}, #{item.sellerId}, #{item.shopName}, #{item.productId}, #{item.productSkcId},
+             #{item.productName}, #{item.extCode}, #{item.mainImageUrl}, #{item.leafCatId},
+             #{item.leafCatName}, #{item.skcSiteStatus}, #{item.supportPersonalization},
+             #{item.matchSkcJitMode}, #{item.createdAtApi}, #{item.propertiesJson},
+             #{item.extensionJson}, #{item.syncTaskId}, 0,
+             #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            shop_name = VALUES(shop_name), product_skc_id = VALUES(product_skc_id), product_name = VALUES(product_name),
+            ext_code = VALUES(ext_code), main_image_url = VALUES(main_image_url),
+            leaf_cat_id = VALUES(leaf_cat_id), leaf_cat_name = VALUES(leaf_cat_name),
+            skc_site_status = VALUES(skc_site_status),
+            support_personalization = VALUES(support_personalization),
+            match_skc_jit_mode = VALUES(match_skc_jit_mode), created_at_api = VALUES(created_at_api),
+            properties_json = VALUES(properties_json), extension_json = VALUES(extension_json),
+            sync_task_id = VALUES(sync_task_id), del_flag = 0, update_time = VALUES(update_time)
+    </insert>
+
+    <update id="markMissingDeleted">
+        UPDATE tb_temu_product
+        SET del_flag = 1, update_time = CURRENT_TIMESTAMP
+        WHERE app_id = #{appId}
+          AND seller_id = #{sellerId}
+          AND del_flag = 0 AND (sync_task_id IS NULL OR sync_task_id != #{syncTaskId})
+    </update>
+</mapper>

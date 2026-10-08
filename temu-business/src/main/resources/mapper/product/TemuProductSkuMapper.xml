@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.product.mapper.TemuProductSkuMapper">
+
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO tb_temu_product_sku
+        (app_id, seller_id, shop_name, product_id, product_skc_id, product_sku_id, ext_code,
+         virtual_stock, shipping_mode, weight, package_length, package_width, package_height,
+         sensitive_flag, extension_json, sync_task_id, del_flag, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.appId}, #{item.sellerId}, #{item.shopName}, #{item.productId}, #{item.productSkcId},
+             #{item.productSkuId}, #{item.extCode}, #{item.virtualStock}, #{item.shippingMode},
+             #{item.weight}, #{item.packageLength}, #{item.packageWidth}, #{item.packageHeight},
+             #{item.sensitiveFlag}, #{item.extensionJson}, #{item.syncTaskId}, 0,
+             #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            shop_name = VALUES(shop_name), product_id = VALUES(product_id), product_skc_id = VALUES(product_skc_id),
+            ext_code = VALUES(ext_code), virtual_stock = VALUES(virtual_stock),
+            shipping_mode = VALUES(shipping_mode), weight = VALUES(weight),
+            package_length = VALUES(package_length), package_width = VALUES(package_width),
+            package_height = VALUES(package_height), sensitive_flag = VALUES(sensitive_flag),
+            extension_json = VALUES(extension_json), sync_task_id = VALUES(sync_task_id),
+            del_flag = 0, update_time = VALUES(update_time)
+    </insert>
+
+    <update id="markMissingDeleted">
+        UPDATE tb_temu_product_sku
+        SET del_flag = 1, update_time = CURRENT_TIMESTAMP
+        WHERE app_id = #{appId}
+          AND seller_id = #{sellerId}
+          AND del_flag = 0 AND (sync_task_id IS NULL OR sync_task_id != #{syncTaskId})
+    </update>
+</mapper>

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.sync.mapper.SyncTaskMapper">
+
+    <sql id="Base_Column_List">
+        id, app_id, auth_region, site, channel_id, account_code, pull_type, pull_status, time_type,
+        begin_time, end_time, state, execution_id, lease_expires_at, error_message,
+        del_flag, create_time, update_time
+    </sql>
+
+    <select id="findLastTaskByAuth" resultType="com.badfisher.temu.business.sync.model.SyncTask">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tb_temu_order_request_task
+        WHERE app_id = #{appId}
+          AND account_code = #{accountCode}
+          AND auth_region = #{authRegion}
+          AND pull_type = #{pullType}
+          AND del_flag = 0
+        ORDER BY id DESC LIMIT 1
+    </select>
+
+    <select id="getUnRequestTaskByAuth" resultType="com.badfisher.temu.business.sync.model.SyncTask">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tb_temu_order_request_task
+        WHERE app_id = #{appId}
+          AND account_code = #{accountCode}
+          AND auth_region = #{authRegion}
+          AND pull_type = #{pullType}
+          AND state = 0
+          AND del_flag = 0
+        ORDER BY id ASC
+    </select>
+
+    <update id="claimTaskByAuth">
+        UPDATE tb_temu_order_request_task
+        SET state = 1,
+            execution_id = #{executionId},
+            lease_expires_at = TIMESTAMPADD(SECOND, #{leaseSeconds}, CURRENT_TIMESTAMP(3)),
+            error_message = NULL,
+            update_time = CURRENT_TIMESTAMP(3)
+        WHERE id = #{taskId}
+          AND app_id = #{appId}
+          AND account_code = #{accountCode}
+          AND auth_region = #{authRegion}
+          AND pull_type = #{pullType}
+          AND state = 0
+          AND del_flag = 0
+    </update>
+
+    <!-- 查询最近一次任务（不限状态），用于计算新的时间窗口 -->
+    <select id="findLastTaskByAccountCode" resultType="com.badfisher.temu.business.sync.model.SyncTask">
+        SELECT
+            <include refid="Base_Column_List"/>
+        FROM tb_temu_order_request_task
+        WHERE account_code = #{accountCode}
+          AND site = #{site}
+          AND channel_id = #{channelId}
+          AND pull_type = #{pullType}
+          AND del_flag = 0
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
+
+    <!-- 查询待处理任务(state=0) -->
+    <select id="getUnRequestTask" resultType="com.badfisher.temu.business.sync.model.SyncTask">
+        SELECT
+            <include refid="Base_Column_List"/>
+        FROM tb_temu_order_request_task
+        WHERE account_code = #{accountCode}
+          AND site = #{site}
+          AND channel_id = #{channelId}
+          AND pull_type = #{pullType}
+          AND state = 0
+          AND del_flag = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- 原子领取任务，避免多实例/重复触发时同一任务被并发消费 -->
+    <update id="claimTask">
+        UPDATE tb_temu_order_request_task
+        SET state = 1,
+            execution_id = #{executionId},
+            lease_expires_at = TIMESTAMPADD(SECOND, #{leaseSeconds}, CURRENT_TIMESTAMP(3)),
+            error_message = NULL,
+            update_time = CURRENT_TIMESTAMP
+        WHERE id = #{taskId}
+          AND account_code = #{accountCode}
+          AND site = #{site}
+          AND channel_id = #{channelId}
+          AND pull_type = #{pullType}
+          AND state = 0
+          AND del_flag = 0
+    </update>
+
+    <!-- 手工数据补偿：只允许失败任务被原子重新领取，避免与其他执行器重复重跑 -->
+    <update id="retryFailedTask">
+        UPDATE tb_temu_order_request_task
+        SET state = 1,
+            execution_id = #{executionId},
+            lease_expires_at = TIMESTAMPADD(SECOND, #{leaseSeconds}, CURRENT_TIMESTAMP(3)),
+            error_message = NULL,
+            update_time = CURRENT_TIMESTAMP
+        WHERE id = #{taskId}
+          AND state = 3
+          AND del_flag = 0
+    </update>
+
+    <sql id="Active_Execution_Condition">
+        id = #{taskId}
+        AND execution_id = #{executionId}
+        AND state = 1
+        AND lease_expires_at &gt; CURRENT_TIMESTAMP(3)
+        AND del_flag = 0
+    </sql>
+
+    <select id="findActiveExecution" resultType="java.lang.Long">
+        SELECT id FROM tb_temu_order_request_task
+        WHERE <include refid="Active_Execution_Condition"/>
+    </select>
+
+    <!-- 必须在业务写入的同一事务内调用，回收/重新领取会等待该任务行锁释放。 -->
+    <select id="lockActiveExecution" resultType="java.lang.Long">
+        SELECT id FROM tb_temu_order_request_task
+        WHERE <include refid="Active_Execution_Condition"/>
+        FOR UPDATE
+    </select>
+
+    <!-- 已过期的租约不能被旧执行器重新续活。 -->
+    <update id="heartbeatTask">
+        UPDATE tb_temu_order_request_task
+        SET lease_expires_at = TIMESTAMPADD(SECOND, #{leaseSeconds}, CURRENT_TIMESTAMP(3)),
+            update_time = CURRENT_TIMESTAMP(3)
+        WHERE <include refid="Active_Execution_Condition"/>
+    </update>
+
+    <update id="completeTask">
+        UPDATE tb_temu_order_request_task
+        SET state = 2,
+            lease_expires_at = NULL,
+            error_message = NULL,
+            update_time = CURRENT_TIMESTAMP(3)
+        WHERE <include refid="Active_Execution_Condition"/>
+    </update>
+
+    <update id="failTask">
+        UPDATE tb_temu_order_request_task
+        SET state = 3,
+            lease_expires_at = NULL,
+            error_message = #{errorMessage},
+            update_time = CURRENT_TIMESTAMP(3)
+        WHERE <include refid="Active_Execution_Condition"/>
+    </update>
+
+    <!-- BuildJob 只能回收心跳超过截止时间的执行中任务 -->
+    <update id="timeoutTask">
+        UPDATE tb_temu_order_request_task
+        SET state = 3,
+            lease_expires_at = NULL,
+            error_message = #{errorMessage},
+            update_time = CURRENT_TIMESTAMP
+        WHERE id = #{taskId}
+          AND state = 1
+          AND (lease_expires_at &lt;= CURRENT_TIMESTAMP(3)
+               OR (lease_expires_at IS NULL
+                   AND (update_time IS NULL OR update_time &lt;= #{heartbeatDeadline})))
+          AND del_flag = 0
+    </update>
+
+</mapper>

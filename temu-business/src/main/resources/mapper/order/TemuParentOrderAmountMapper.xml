@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.order.mapper.TemuParentOrderAmountMapper">
+
+    <sql id="Base_Column_List">
+        id, parent_order_sn, seller_id, currency,
+        customer_paid, tax_total, refunds_total,
+        estimated_revenue, estimated_revenue_deduction,
+        discount_from_temu, discount_from_seller, total_discount,
+        shipping_amount_total, base_price_total, retail_price_total,
+        del_flag, create_time, update_time
+    </sql>
+
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO tb_temu_parent_order_amount
+        (parent_order_sn, seller_id, currency,
+         customer_paid, tax_total, refunds_total,
+         estimated_revenue, estimated_revenue_deduction,
+         discount_from_temu, discount_from_seller, total_discount,
+         shipping_amount_total, base_price_total, retail_price_total,
+         del_flag, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.parentOrderSn}, #{item.sellerId}, #{item.currency},
+             #{item.customerPaid}, #{item.taxTotal}, #{item.refundsTotal},
+             #{item.estimatedRevenue}, #{item.estimatedRevenueDeduction},
+             #{item.discountFromTemu}, #{item.discountFromSeller}, #{item.totalDiscount},
+             #{item.shippingAmountTotal}, #{item.basePriceTotal}, #{item.retailPriceTotal},
+             #{item.delFlag}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            currency = VALUES(currency),
+            customer_paid = VALUES(customer_paid),
+            tax_total = VALUES(tax_total),
+            refunds_total = VALUES(refunds_total),
+            estimated_revenue = VALUES(estimated_revenue),
+            estimated_revenue_deduction = VALUES(estimated_revenue_deduction),
+            discount_from_temu = VALUES(discount_from_temu),
+            discount_from_seller = VALUES(discount_from_seller),
+            total_discount = VALUES(total_discount),
+            shipping_amount_total = VALUES(shipping_amount_total),
+            base_price_total = VALUES(base_price_total),
+            retail_price_total = VALUES(retail_price_total),
+            update_time = VALUES(update_time)
+    </insert>
+
+</mapper>

@@ -1,0 +1,46 @@
+# 纯后端的外部配置示例，不包含前端或前端演示数据。
+# 复制到工程外私有目录，通过 spring.config.additional-location 显式加载。
+# demo-app-a/demo-app-b 必须替换为授权记录中的真实 appId，保持大小写一致。
+# 每个 URL 都是完整请求地址，例如 https://your-proxy.example/openapi/router。
+# 使用前确认代理上游、授权区域和 Temu 应用的实际出口 IP 白名单。
+# 主流程为半托订单、售后、仓库；partner-url/CN 仅在商品授权确认后使用。
+# 当前 CN 是代码中的商品授权约定，不表示半托、本本或全托的业务模式。
+# 未填写的路由为空，对应接口调用会拒绝执行；没有其他出口的自动回退。
+server:
+  port: ${SERVER_PORT:9041}
+
+temu:
+  client:
+    rate-limit-mode: ${TEMU_RATE_LIMIT_MODE:local}
+    redis-address: ${REDIS_ADDRESS:redis://localhost:6379}
+    redis-password: ${REDIS_PASSWORD:}
+  scheduler:
+    enabled: ${XXL_JOB_ENABLED:false}
+    admin-addresses: ${XXL_JOB_ADMIN_ADDRESSES:}
+    access-token: ${XXL_JOB_ACCESS_TOKEN:}
+    app-name: ${XXL_JOB_APP_NAME:badfisher-temu}
+    port: ${XXL_JOB_EXECUTOR_PORT:9999}
+    log-path: ${XXL_JOB_LOG_PATH:logs/xxl-job}
+    log-retention-days: ${XXL_JOB_LOG_RETENTION_DAYS:30}
+  api:
+    routes:
+      demo-app-a:
+        US:
+          order-url: ${TEMU_APP_A_US_ORDER_URL:}
+          partner-url: ${TEMU_APP_A_US_PARTNER_URL:}
+        GLOBAL:
+          order-url: ${TEMU_APP_A_GLOBAL_ORDER_URL:}
+          partner-url: ${TEMU_APP_A_GLOBAL_PARTNER_URL:}
+        CN:
+          partner-url: ${TEMU_APP_A_CN_PARTNER_URL:}
+      demo-app-b:
+        US:
+          order-url: ${TEMU_APP_B_US_ORDER_URL:}
+          partner-url: ${TEMU_APP_B_US_PARTNER_URL:}
+        GLOBAL:
+          order-url: ${TEMU_APP_B_GLOBAL_ORDER_URL:}
+          partner-url: ${TEMU_APP_B_GLOBAL_PARTNER_URL:}
+        CN:
+          partner-url: ${TEMU_APP_B_CN_PARTNER_URL:}
+# 仅在确有 EU 授权且出口已获准时，为对应主体增加 EU 节点及所需 URL。
+# DB_URL、DB_USERNAME、DB_PASSWORD、TEMU_API_KEY 由主配置从环境变量读取。

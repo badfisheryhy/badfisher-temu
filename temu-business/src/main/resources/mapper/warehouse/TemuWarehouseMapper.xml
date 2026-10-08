@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.warehouse.mapper.TemuWarehouseMapper">
+
+    <sql id="Base_Column_List">
+        id, seller_id, warehouse_id, warehouse_name, region_id1,
+        warehouse_management_type, default_warehouse, push_order_to_open_platform,
+        enable_buy_shipping_label,
+        del_flag, create_time, create_user_id, update_time, update_user_id
+    </sql>
+
+</mapper>

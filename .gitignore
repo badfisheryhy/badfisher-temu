@@ -1,0 +1,15 @@
+target/
+.tools/
+dist/
+Typora_Hook_Log.txt
+.idea/
+.vscode/
+*.iml
+*.log
+logs/
+.env
+application-local.yml
+*.class
+*.jar
+.DS_Store
+Thumbs.db

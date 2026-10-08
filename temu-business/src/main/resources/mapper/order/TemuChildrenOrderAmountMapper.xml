@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.order.mapper.TemuChildrenOrderAmountMapper">
+
+    <sql id="Base_Column_List">
+        id, parent_order_sn, order_sn, seller_id, currency, quantity,
+        discount_from_temu, discount_from_seller, ship_amount_total,
+        unit_base_price, unit_retail_price, base_price,
+        del_flag, create_time, update_time
+    </sql>
+
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO tb_temu_children_order_amount
+        (parent_order_sn, order_sn, seller_id, currency, quantity,
+         discount_from_temu, discount_from_seller, ship_amount_total,
+         unit_base_price, unit_retail_price, base_price,
+         del_flag, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.parentOrderSn}, #{item.orderSn}, #{item.sellerId},
+             #{item.currency}, #{item.quantity},
+             #{item.discountFromTemu}, #{item.discountFromSeller}, #{item.shipAmountTotal},
+             #{item.unitBasePrice}, #{item.unitRetailPrice}, #{item.basePrice},
+             #{item.delFlag}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            parent_order_sn = VALUES(parent_order_sn),
+            currency = VALUES(currency),
+            quantity = VALUES(quantity),
+            discount_from_temu = VALUES(discount_from_temu),
+            discount_from_seller = VALUES(discount_from_seller),
+            ship_amount_total = VALUES(ship_amount_total),
+            unit_base_price = VALUES(unit_base_price),
+            unit_retail_price = VALUES(unit_retail_price),
+            base_price = VALUES(base_price),
+            update_time = VALUES(update_time)
+    </insert>
+
+</mapper>

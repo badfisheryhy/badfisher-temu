@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.audit.mapper.TemuApiLogMapper">
+
+    <select id="selectSummary" resultType="com.badfisher.temu.business.audit.dto.ApiLogSummaryVO">
+        SELECT api_name AS apiName,
+               COUNT(*) AS executeCount,
+               ROUND(AVG(cost_time_ms), 2) AS avgCostTimeMs,
+               MAX(cost_time_ms) AS maxCostTimeMs,
+               MIN(cost_time_ms) AS minCostTimeMs,
+               SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS failedCount
+        FROM tb_temu_api_log
+        <where>
+            cost_time_ms IS NOT NULL
+            <if test="query.appId != null and query.appId != ''">AND app_id = #{query.appId}</if>
+            <if test="query.apiName != null and query.apiName != ''">AND api_name LIKE CONCAT('%', #{query.apiName}, '%')</if>
+            <if test="query.sellerId != null and query.sellerId != ''">AND seller_id = #{query.sellerId}</if>
+            <if test="query.success != null">AND success = #{query.success}</if>
+            <if test="query.statusCode != null">AND status_code = #{query.statusCode}</if>
+            <if test="query.errorCode != null and query.errorCode != ''">AND error_code = #{query.errorCode}</if>
+            <if test="query.minCostTimeMs != null">AND cost_time_ms &gt;= #{query.minCostTimeMs}</if>
+            <if test="query.maxCostTimeMs != null">AND cost_time_ms &lt;= #{query.maxCostTimeMs}</if>
+            <if test="query.createTimeStart != null">AND create_time &gt;= #{query.createTimeStart}</if>
+            <if test="query.createTimeEnd != null">AND create_time &lt;= #{query.createTimeEnd}</if>
+        </where>
+        GROUP BY api_name
+        ORDER BY avgCostTimeMs DESC
+    </select>
+
+    <!-- 利用create_time索引分批清理，避免一次大事务删除大量MEDIUMTEXT日志。 -->
+    <delete id="deleteExpiredLogs">
+        DELETE FROM tb_temu_api_log
+        WHERE create_time &lt; #{cutoffTime}
+        ORDER BY create_time ASC
+        LIMIT #{limit}
+    </delete>
+</mapper>

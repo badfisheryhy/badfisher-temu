@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.order.mapper.TemuParentOrderMapper">
+
+    <sql id="Base_Column_List">
+        id, parent_order_sn, parent_order_status, parent_order_time, parent_shipping_time,
+        expect_ship_latest_time, latest_delivery_time, parent_confirm_time,
+        parent_order_pending_finish_time, update_time_api,
+        shipping_method, order_payment_type,
+        is_shipment_consolidated_by_main_mall, has_shipping_fee,
+        region_id, site_id, seller_id, channel_id, site, buyer_name,
+        del_flag, create_time, create_user_id, update_time, update_user_id
+    </sql>
+
+    <select id="selectOrderSnsMissingAmount" resultType="java.lang.String">
+        SELECT po.parent_order_sn
+        FROM tb_temu_parent_order po
+        LEFT JOIN tb_temu_parent_order_amount poa
+            ON po.parent_order_sn = poa.parent_order_sn
+            AND poa.seller_id = #{sellerId}
+        WHERE po.del_flag = 0
+          AND po.seller_id = #{sellerId}
+          AND po.create_time &gt;= FROM_UNIXTIME(#{sinceSeconds})
+          AND poa.id IS NULL
+    </select>
+
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO tb_temu_parent_order
+        (id, parent_order_sn, parent_order_status, parent_order_time, parent_shipping_time,
+         expect_ship_latest_time, latest_delivery_time, parent_confirm_time,
+         parent_order_pending_finish_time, update_time_api,
+         shipping_method, order_payment_type,
+         is_shipment_consolidated_by_main_mall, has_shipping_fee,
+         region_id, site_id, seller_id, channel_id, site, buyer_name,
+         del_flag, create_time, create_user_id, update_time, update_user_id)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.parentOrderSn}, #{item.parentOrderStatus}, #{item.parentOrderTime},
+             #{item.parentShippingTime}, #{item.expectShipLatestTime}, #{item.latestDeliveryTime},
+             #{item.parentConfirmTime}, #{item.parentOrderPendingFinishTime}, #{item.updateTimeApi},
+             #{item.shippingMethod}, #{item.orderPaymentType},
+             #{item.isShipmentConsolidatedByMainMall}, #{item.hasShippingFee},
+             #{item.regionId}, #{item.siteId}, #{item.sellerId}, #{item.channelId}, #{item.site}, #{item.buyerName},
+             #{item.delFlag}, #{item.createTime}, #{item.createUserId}, #{item.updateTime}, #{item.updateUserId})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            parent_order_status = VALUES(parent_order_status),
+            parent_order_time = VALUES(parent_order_time),
+            parent_shipping_time = VALUES(parent_shipping_time),
+            expect_ship_latest_time = VALUES(expect_ship_latest_time),
+            latest_delivery_time = VALUES(latest_delivery_time),
+            parent_confirm_time = VALUES(parent_confirm_time),
+            parent_order_pending_finish_time = VALUES(parent_order_pending_finish_time),
+            update_time_api = VALUES(update_time_api),
+            shipping_method = VALUES(shipping_method),
+            order_payment_type = VALUES(order_payment_type),
+            is_shipment_consolidated_by_main_mall = VALUES(is_shipment_consolidated_by_main_mall),
+            has_shipping_fee = VALUES(has_shipping_fee),
+            region_id = VALUES(region_id),
+            site_id = VALUES(site_id),
+            buyer_name = VALUES(buyer_name),
+            update_time = VALUES(update_time)
+    </insert>
+
+</mapper>

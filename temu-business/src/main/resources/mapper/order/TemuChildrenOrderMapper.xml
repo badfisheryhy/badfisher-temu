@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.order.mapper.TemuChildrenOrderMapper">
+
+    <sql id="Base_Column_List">
+        id, seller_id, channel_id, site, parent_order_sn, order_sn, goods_id, goods_name, order_status,
+        quantity, sku_id, spec, thumb_url, del_flag, create_time, update_time
+    </sql>
+
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO tb_temu_children_order
+        (id, parent_order_sn, seller_id, channel_id, site, order_sn, goods_id, goods_name, order_status,
+         quantity, sku_id, spec, thumb_url, del_flag, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.parentOrderSn}, #{item.sellerId}, #{item.channelId}, #{item.site},
+             #{item.orderSn}, #{item.goodsId},
+             #{item.goodsName}, #{item.orderStatus}, #{item.quantity}, #{item.skuId},
+             #{item.spec}, #{item.thumbUrl}, #{item.delFlag}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            goods_id = VALUES(goods_id),
+            goods_name = VALUES(goods_name),
+            order_status = VALUES(order_status),
+            quantity = VALUES(quantity),
+            sku_id = VALUES(sku_id),
+            spec = VALUES(spec),
+            thumb_url = VALUES(thumb_url),
+            update_time = VALUES(update_time)
+    </insert>
+
+</mapper>

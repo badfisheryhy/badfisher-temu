@@ -1,0 +1,47 @@
+server:
+  port: ${SERVER_PORT:8080}
+spring:
+  application:
+    name: badfisher-temu
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/badfisher_temu?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC}
+    username: ${DB_USERNAME:badfisher}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: UTC
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+temu:
+  security:
+    api-key: ${TEMU_API_KEY:}
+  client:
+    rate-limit-mode: ${TEMU_RATE_LIMIT_MODE:local}
+    requests-per-second: 18
+    rate-limit-wait-seconds: 1
+    connect-timeout-seconds: 30
+    read-timeout-seconds: 60
+    write-timeout-seconds: 30
+    redis-address: ${REDIS_ADDRESS:redis://localhost:6379}
+    redis-password: ${REDIS_PASSWORD:}
+  scheduler:
+    enabled: ${XXL_JOB_ENABLED:false}
+    admin-addresses: ${XXL_JOB_ADMIN_ADDRESSES:}
+    access-token: ${XXL_JOB_ACCESS_TOKEN:}
+  api:
+    debug-enabled: false
+    routes: {}

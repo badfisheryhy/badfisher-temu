@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.aftersales.mapper.TemuAftersalesProductMapper">
+
+    <sql id="Base_Column_List">
+        id, parent_aftersales_sn, aftersales_sn, seller_id, channel_id, site, product_sku_id, ext_code,
+        del_flag, create_time, update_time
+    </sql>
+
+    <insert id="insertOrUpdateBatch" parameterType="list">
+        INSERT INTO tb_temu_aftersales_product
+        (id, parent_aftersales_sn, aftersales_sn, seller_id, channel_id, site, product_sku_id, ext_code,
+         del_flag, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.parentAftersalesSn}, #{item.aftersalesSn}, #{item.sellerId},
+             #{item.channelId}, #{item.site},
+             #{item.productSkuId}, #{item.extCode},
+             #{item.delFlag}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            parent_aftersales_sn = VALUES(parent_aftersales_sn),
+            seller_id = VALUES(seller_id),
+            ext_code = COALESCE(VALUES(ext_code), ext_code),
+            update_time = VALUES(update_time)
+    </insert>
+
+</mapper>

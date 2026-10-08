@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.badfisher.temu.business.order.mapper.TemuOrderAddressMapper">
+
+    <sql id="Base_Column_List">
+        id, seller_id, channel_id, site, parent_order_sn, receipt_name, mobile,
+        regionname1, regionname2, regionname3,
+        addressline1, addressline2, post_code, mail, country_code,
+        del_flag, create_time, update_time
+    </sql>
+
+</mapper>
